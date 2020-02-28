@@ -14,7 +14,7 @@ This repo is a rough set of functions that in the future, will constitute a Pyth
 
 Our lab uses Presentation software, so at this point, the sole purpose of this set of functions is to transform the logs from this very software into SPM-ready onsets and durations of the stimuli presented during an fMRI experiment. Doing the same thing for PsychoPy-based experiments seems redundant at this point.
 
-It is too early to build any package out of these functions as they have not been very heavily tested with logs from various procedures (which means the whole thing could break faster than Dexter's secret lab when Deedee pressed the red button). The image below shows the reality:
+It is too early to build any package out of these functions as they have not been very heavily tested with logs from various procedures (which means the whole thing could break faster than Dexter's secret lab when Deedee pressed the red button). The image below shows how it all works:
 
 ![deedee.jpeg](https://raw.githubusercontent.com/gacek91/durons/master/imgs/deedee.jpeg)
 
