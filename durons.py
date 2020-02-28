@@ -3,10 +3,34 @@ def read_log(file, sep="\t", skiprows=3):
     d = pd.read_csv(file, sep=sep, skiprows=skiprows)
     return d
 
+
 def fix_names(self):
     'fix column names'
+    def strip_accents(text):
+        """
+        Strip accents from input String.
+
+        :param text: The input string.
+        :type text: String.
+
+        :returns: The processed String.
+        :rtype: String.
+        """
+        import unicodedata
+        try:
+            text = unicode(text, 'utf-8')
+        except (TypeError, NameError): # unicode is a default on python 3 
+            pass
+        text = unicodedata.normalize('NFD', text)
+        text = text.encode('ascii', 'ignore')
+        text = text.decode("utf-8")
+        return str(text)
+
     self = self.copy()
     self.columns = self.columns.str.strip().str.lower().str.replace(' ', '_').str.replace('(', '').str.replace(')', '').str.replace('.','_')
+    c = list(self.columns)
+    c = [strip_accents(name) for name in c]
+    self.columns = c
     return self
 
 def exclude_nonsubj_data(self, participant):
