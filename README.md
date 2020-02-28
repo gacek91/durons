@@ -20,8 +20,8 @@ It is too early to build any package out of these functions as they have not bee
 
 | Function|Purpose| 
 | :-------------:|:-------------:| 
-| read_log| self-explanatory|
-|fix_names|self-explanatory|
+| read_log|self-explanatory|
+|fix_names|fix column names (remove spaces and other potentially destructive symbols|
 |exclude_nonsubj_data|self-explanatory|
 |stimuli_from_log|Show all unique stimuli/events from the file|
 |pairwise_idx|Figure out where a single block starts and ends|
@@ -30,3 +30,4 @@ It is too early to build any package out of these functions as they have not bee
 |calculate_times|The first fMRI pulse becomes the starting point, and all the events have their times recalculated and converted to seconds|
 |durons|Calculate durations and onsets in pre-defined (or not) blocks|
 |durons_savemat|Export durations and onsets to an SPM-ready .mat file|
+
