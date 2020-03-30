@@ -1,3 +1,5 @@
+import pandas as pd
+
 def read_log(file, sep="\t", skiprows=3):
     import pandas as pd
     d = pd.read_csv(file, sep=sep, skiprows=skiprows)
@@ -282,3 +284,153 @@ def durons_savemat(durons_dict, filename, sort = True, output = False):
     savemat(file_name = filename, mdict = mat)
     if output:
         return mat
+    
+@pd.api.extensions.register_dataframe_accessor("mr")
+class fmri:
+    def __init__(self, pandas_obj):
+        self._validate(pandas_obj)
+        self._obj = pandas_obj
+    
+    def fix_names(self):
+        self._obj.columns = self._obj.columns.str.strip().str.lower().str.replace(' ', '_').str.replace('(', '').str.replace(')', '').str.replace('.','_')
+
+    @staticmethod
+    def _validate(obj):
+        # verify there is a column Code or code
+        if 'Code' not in obj.columns and 'code' not in obj.columns:
+            raise AttributeError("Must have 'code' or 'Code' column")
+
+    @property
+    def decode(self):
+        try:
+            code = self._obj.code.str.lower()
+        except:
+            code = self._obj.Code.str.lower()
+        
+        for i, c in enumerate(code):
+            if 'cue' in c:
+                code.iloc[i] = 'cue'
+            elif 'block_' in c:
+                if 'con' in c:
+                    code.iloc[i] = 'control'
+                elif 'exp' in c:
+                    code.iloc[i] = 'experimental'
+                elif 'end' in c:
+                    code.iloc[i] = code.iloc[i-1]
+        
+        return code
+    
+    def calculate_times(self, s = True):
+        d = self._obj
+        if s:
+            d.time = (d.time - d.time[d.event_type == 'Pulse'].iloc[0])/10000
+        else:
+            d.time = (d.time - d.time[d.event_type == 'Pulse'].iloc[0])
+        return d
+    
+    def durations(self, s = True):
+        durations = []
+        d = self._obj
+        if s:
+            s = 10000
+        for row in range(d.shape[0]):
+            try:
+                if d.iloc[row,:]['code'] == 'cue':
+                    durations.append(d.iloc[row,:]['duration']/s)
+                elif d.iloc[row,:]['code'] != 'cue' and d.iloc[row,:]['code'] == d.iloc[row+1,:]['code']:
+                    durations.append(d.iloc[row+1,:]['time']-d.iloc[row,:]['time'])
+                else:
+                    durations.append(np.nan)
+            except:
+                durations.append(np.nan)
+        return durations
+    
+    def blocknum(self):
+        try:
+            code = self._obj.code.str.lower()
+        except:
+            code = self._obj.Code.str.lower()
+        n = []
+        ni = 1
+        for i, c in enumerate(code):
+            if i == 0:
+                n.append(ni)
+                ni += 1
+            else:
+                if (code.iloc[i] != code.iloc[i-1]) and (code.iloc[i] != code.iloc[i+1]):
+                    ni += 1
+                    n.append(ni)
+                    ni += 1
+                elif (code.iloc[i] != code.iloc[i-1]) and (code.iloc[i] == code.iloc[i+1]):
+                    n.append(ni)
+                try:
+                    if (code.iloc[i] == code.iloc[i-1]) and (code.iloc[i] != code.iloc[i+1]):
+                        n.append(ni)
+                except:
+                    n.append(ni)
+        return n
+    
+    def get_timepoints(self):
+        d = self._obj
+        d = d[d.code.str.contains('BLOCK_END')|d.code.str.contains('block_end')|
+          d.code.str.contains('BLOCK_START')|d.code.str.contains('block_start')|
+          d.code.str.contains('CUE')|d.code.str.contains('cue')]
+        return d
+    
+    def durons(self):
+        d = self._obj
+        d = d[['code','time','duration']].dropna().sort_values(by=['code', 'time']).reset_index(drop=True)
+        d.columns = ['names','onsets','durations']
+        d_temp = d.copy()
+        d = {}
+        for name in list(set(d_temp.names)):
+            d[name] = d_temp[d_temp.names == name][['onsets','durations']].reset_index(drop=True)
+        return d
+    
+@pd.api.extensions.register_series_accessor("mr")
+class SubclassedSeries(pd.Series):
+
+    @property
+    def _constructor(self):
+        return SubclassedSeries
+
+    @property
+    def _constructor_expanddim(self):
+        return SubclassedDataFrame
+
+    
+    def blocknum(self):
+        code = self.str.lower()
+        n = []
+        ni = 1
+        for i, c in enumerate(code):
+            if i == 0:
+                n.append(ni)
+                ni += 1
+            else:
+                if (code.iloc[i] != code.iloc[i-1]) and (code.iloc[i] != code.iloc[i+1]):
+                    ni += 1
+                    n.append(ni)
+                    ni += 1
+                elif (code.iloc[i] != code.iloc[i-1]) and (code.iloc[i] == code.iloc[i+1]):
+                    n.append(ni)
+                try:
+                    if (code.iloc[i] == code.iloc[i-1]) and (code.iloc[i] != code.iloc[i+1]):
+                        n.append(ni)
+                except:
+                    n.append(ni)
+        return n
+    
+    def decode(self):
+        code = self.str.lower()
+        for i, c in enumerate(code):
+            if 'cue' in c:
+                code.iloc[i] = 'cue'
+            elif 'block_' in c:
+                if 'con' in c:
+                    code.iloc[i] = 'control'
+                elif 'exp' in c:
+                    code.iloc[i] = 'experimental'
+                elif 'end' in c:
+                    code.iloc[i] = code.iloc[i-1]
+        return code
