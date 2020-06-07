@@ -2,8 +2,7 @@ import pandas as pd
 
 def read_log(file, sep="\t", skiprows=3):
     import pandas as pd
-    d = pd.read_csv(file, sep=sep, skiprows=skiprows)
-    return d
+    return pd.read_csv(file, sep=sep, skiprows=skiprows)
 
 
 def fix_names(self):
@@ -53,7 +52,7 @@ def exclude_nonsubj_data(self, participant):
     return self
     
 def stimuli_from_log(file, participant=None, sep = '\t', skiprows = 3, sort = True):
-    
+
     '''
     Show all stimuli from the log file
     
@@ -81,19 +80,15 @@ def stimuli_from_log(file, participant=None, sep = '\t', skiprows = 3, sort = Tr
     '''
     import pandas as pd
     import os.path as op
-    if participant == None:
+    if participant is None:
         participant = op.split(file)[-1].split("-")[0]
 
-    
+
     data = pd.read_csv(file, sep = sep, skiprows = skiprows)
     data.reset_index(inplace=True,drop=True)
     data = fix_names(data)
     data = exclude_nonsubj_data(data, participant = participant)
-    if sort:
-        stimuli = sorted(list(set(data.code)))
-    else:
-        stimuli = list(set(data.code))
-    return stimuli
+    return sorted(list(set(data.code))) if sort else list(set(data.code))
 
 def pairwise(iterable):
     from itertools import tee
@@ -114,8 +109,6 @@ def pairwise_idx(df, idx):
 def list2regex(l, pipe = '|'):
     if type(l) is list:
         l = pipe.join(l)
-    else:
-        pass
     return l
 
 def get_blocks(file, codes, blocks, until, participant=None, sep = '\t', skiprows = 3, sort = True):
@@ -230,8 +223,8 @@ def durons(file, stimuli=None, participant=None, sep = '\t', skiprows = 3, sort 
     
     import os.path as op
     import pandas as pd
-    
-    if participant == None:
+
+    if participant is None:
         participant = op.split(file)[-1].split("-")[0]
 
     data = pd.read_csv(file, sep = sep, skiprows = skiprows)
@@ -337,7 +330,7 @@ class fmri:
             try:
                 if d.iloc[row,:]['code'] == 'cue':
                     durations.append(d.iloc[row,:]['duration']/s)
-                elif d.iloc[row,:]['code'] != 'cue' and d.iloc[row,:]['code'] == d.iloc[row+1,:]['code']:
+                elif d.iloc[row, :]['code'] == d.iloc[row + 1, :]['code']:
                     durations.append(d.iloc[row+1,:]['time']-d.iloc[row,:]['time'])
                 else:
                     durations.append(np.nan)
@@ -357,12 +350,13 @@ class fmri:
                 n.append(ni)
                 ni += 1
             else:
-                if (code.iloc[i] != code.iloc[i-1]) and (code.iloc[i] != code.iloc[i+1]):
-                    ni += 1
-                    n.append(ni)
-                    ni += 1
-                elif (code.iloc[i] != code.iloc[i-1]) and (code.iloc[i] == code.iloc[i+1]):
-                    n.append(ni)
+                if code.iloc[i] != code.iloc[i-1]:
+                    if code.iloc[i] != code.iloc[i + 1]:
+                        ni += 1
+                        n.append(ni)
+                        ni += 1
+                    else:
+                        n.append(ni)
                 try:
                     if (code.iloc[i] == code.iloc[i-1]) and (code.iloc[i] != code.iloc[i+1]):
                         n.append(ni)
@@ -408,12 +402,13 @@ class SubclassedSeries(pd.Series):
                 n.append(ni)
                 ni += 1
             else:
-                if (code.iloc[i] != code.iloc[i-1]) and (code.iloc[i] != code.iloc[i+1]):
-                    ni += 1
-                    n.append(ni)
-                    ni += 1
-                elif (code.iloc[i] != code.iloc[i-1]) and (code.iloc[i] == code.iloc[i+1]):
-                    n.append(ni)
+                if code.iloc[i] != code.iloc[i-1]:
+                    if code.iloc[i] != code.iloc[i + 1]:
+                        ni += 1
+                        n.append(ni)
+                        ni += 1
+                    else:
+                        n.append(ni)
                 try:
                     if (code.iloc[i] == code.iloc[i-1]) and (code.iloc[i] != code.iloc[i+1]):
                         n.append(ni)
